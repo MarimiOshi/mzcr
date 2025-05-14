@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini 文字コラセリフジェネレーター</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        .api-key-input-container {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .api-key-input-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .api-key-input-container input[type="password"],
+        .api-key-input-container input[type="text"] { /* For better UX, allow text for easier copy-paste */
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .file-input-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 2px dashed #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .file-input-container:hover {
+            background-color: #f0f0f0;
+        }
+        input[type="file"] {
+            display: none; /* Hide default file input */
+        }
+        #image-preview-container {
+            margin-top: 15px;
+            margin-bottom: 20px;
+            min-height: 100px; /* プレビューエリアの最小高さ */
+            border: 1px solid #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #fafafa;
+        }
+        #image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            display: none; /* Initially hidden */
+        }
+        .prompt-options {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .prompt-options label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .prompt-options select, .prompt-options input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #result-area {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            text-align: left;
+            white-space: pre-wrap; /* 改行を保持 */
+            min-height: 100px;
+        }
+        .loading-message {
+            display: none; /* Initially hidden */
+            margin-top: 10px;
+            color: #555;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .footer-note {
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gemini 文字コラセリフジェネレーター</h1>
+
+        <div class="api-key-input-container">
+            <label for="api-key">Gemini APIキー:</label>
+            <input type="password" id="api-key" placeholder="ここにAPIキーを入力 (セキュリティのため非表示)">
+            <p style="font-size:0.8em; color: #555;">
+                APIキーはブラウザに保存されず、このページを開いている間のみ使用されます。
+                <strong>この方法は安全ではありません。個人利用に限定してください。</strong>
+            </p>
+        </div>
+
+        <div class="file-input-container" id="drop-zone">
+            <label for="image-file">画像ファイルを選択するか、ここにドラッグ＆ドロップしてください</label>
+            <input type="file" id="image-file" accept="image/*">
+        </div>
+        
+        <div id="image-preview-container">
+            <img id="image-preview" src="#" alt="画像プレビュー">
+            <span id="preview-placeholder" style="color:#aaa;">画像プレビューエリア</span>
+        </div>
+
+        <div class="prompt-options">
+            <label for="dialogue-type">セリフの雰囲気:</label>
+            <select id="dialogue-type">
+                <option value="面白い">面白い</option>
+                <option value="感動する">感動する</option>
+                <option value="シリアスな">シリアスな</option>
+                <option value="意味深な">意味深な</option>
+                <option value="エッチな（AIのポリシーにより制限される可能性あり）">エッチな (AI制限の可能性有)</option>
+                <option value="ツッコミ">ツッコミ</option>
+                <option value="心の声">心の声</option>
+                <option value="その他（自由入力）">その他（自由入力）</option>
+            </select>
+            <input type="text" id="custom-dialogue-type" placeholder="セリフの雰囲気を自由入力" style="display:none;">
+
+            <label for="num-suggestions">提案数:</label>
+            <select id="num-suggestions">
+                <option value="1">1つ</option>
+                <option value="3" selected>3つ</option>
+                <option value="5">5つ</option>
+            </select>
+        </div>
+
+        <button id="generate-button" disabled>セリフを生成</button>
+        <div id="loading-message" class="loading-message">生成中... しばらくお待ちください。</div>
+        <div id="error-message" class="error-message" style="display:none;"></div>
+
+        <h2>生成されたセリフ:</h2>
+        <div id="result-area">ここにセリフが表示されます。</div>
+        <button id="copy-result-button" style="margin-top:10px; background-color: #5cb85c; display:none;">結果をコピー</button>
+
+
+        <p class="footer-note">
+            このツールはGoogleのGemini APIを利用しています。<br>
+            APIキーの取り扱いには十分注意し、個人利用の範囲でご利用ください。<br>
+            生成されるセリフはAIによるものであり、その内容を保証するものではありません。
+        </p>
+    </div>
+
+    <script type="module">
+        // Google AI JavaScript SDKのインポート
+        // SDKのバージョンは適宜最新のものに更新してください
+        import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://cdn.jsdelivr.net/npm/@google/generative-ai/+esm";
+
+        const apiKeyInput = document.getElementById('api-key');
+        const imageFileElement = document.getElementById('image-file');
+        const imagePreviewElement = document.getElementById('image-preview');
+        const previewPlaceholder = document.getElementById('preview-placeholder');
+        const generateButton = document.getElementById('generate-button');
+        const resultArea = document.getElementById('result-area');
+        const loadingMessage = document.getElementById('loading-message');
+        const errorMessageElement = document.getElementById('error-message');
+        const dialogueTypeSelect = document.getElementById('dialogue-type');
+        const customDialogueTypeInput = document.getElementById('custom-dialogue-type');
+        const numSuggestionsSelect = document.getElementById('num-suggestions');
+        const dropZone = document.getElementById('drop-zone');
+        const copyResultButton = document.getElementById('copy-result-button');
+
+        // セキュリティのため、ページを離れる際にAPIキーをクリアする（より安全なのは入力させないこと）
+        // window.addEventListener('beforeunload', () => {
+        //     apiKeyInput.value = ''; 
+        // });
+        // APIキーの初期値 (これはダミーです。実際のキーに置き換えてください)
+        // apiKeyInput.value = "YOUR_GEMINI_API_KEY"; // ★★★ここにAPIキーを直書き★★★
+
+        let imageDataUrl = null;
+        let genAIInstance = null;
+        let generativeModel = null;
+
+        function initializeGenerativeAI() {
+            const apiKey = apiKeyInput.value.trim();
+            if (!apiKey) {
+                showError("APIキーが入力されていません。");
+                return false;
+            }
+            try {
+                genAIInstance = new GoogleGenerativeAI(apiKey);
+                generativeModel = genAIInstance.getGenerativeModel({ 
+                    model: "gemini-pro-vision", // 画像処理が可能なモデル
+                    // セーフティセッティング (必要に応じて調整)
+                    // 注意: これを緩和しすぎるとAPIエラーや予期せぬ結果の原因になることがあります
+                    safetySettings: [
+                        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+                        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+                        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+                    ]
+                });
+                showError(""); // エラーメッセージをクリア
+                return true;
+            } catch (error) {
+                console.error("Gemini AIの初期化に失敗:", error);
+                showError("Gemini AIの初期化に失敗しました: " + error.message);
+                return false;
+            }
+        }
+        
+        apiKeyInput.addEventListener('input', () => {
+            if (imageDataUrl && apiKeyInput.value.trim()) {
+                generateButton.disabled = false;
+            } else {
+                generateButton.disabled = true;
+            }
+        });
+
+
+        dialogueTypeSelect.addEventListener('change', function() {
+            if (this.value === 'その他（自由入力）') {
+                customDialogueTypeInput.style.display = 'block';
+                customDialogueTypeInput.focus();
+            } else {
+                customDialogueTypeInput.style.display = 'none';
+            }
+        });
+        
+        // --- ドラッグ＆ドロップ処理 ---
+        dropZone.addEventListener('dragover', (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy'; // カーソルをコピーアイコンに
+            dropZone.style.backgroundColor = '#e0e0e0';
+        });
+
+        dropZone.addEventListener('dragleave', (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+            dropZone.style.backgroundColor = ''; // 元の背景色に
+        });
+
+        dropZone.addEventListener('drop', (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+            dropZone.style.backgroundColor = '';
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        // ファイル選択inputにもイベントリスナーを追加
+        imageFileElement.addEventListener('change', (event) => {
+            if (event.target.files && event.target.files[0]) {
+                handleFile(event.target.files[0]);
+            }
+        });
+        // --- ドラッグ＆ドロップ処理ここまで ---
+
+        function handleFile(file) {
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imageDataUrl = e.target.result;
+                    imagePreviewElement.src = imageDataUrl;
+                    imagePreviewElement.style.display = 'block';
+                    previewPlaceholder.style.display = 'none';
+                    if (apiKeyInput.value.trim()) {
+                        generateButton.disabled = false;
+                    }
+                    showError(""); // ファイル選択成功でエラーをクリア
+                }
+                reader.readAsDataURL(file);
+            } else {
+                imageDataUrl = null;
+                imagePreviewElement.style.display = 'none';
+                previewPlaceholder.style.display = 'inline';
+                generateButton.disabled = true;
+                showError("画像ファイルを選択してください。");
+            }
+        }
+
+        generateButton.addEventListener('click', async () => {
+            if (!imageDataUrl) {
+                showError("まず画像を選択してください。");
+                return;
+            }
+            if (!initializeGenerativeAI()) return; // APIキーで初期化試行
+
+            loadingMessage.style.display = 'block';
+            generateButton.disabled = true;
+            resultArea.textContent = '';
+            copyResultButton.style.display = 'none';
+            showError("");
+
+            const dialogueTypeValue = dialogueTypeSelect.value;
+            const atmosphere = dialogueTypeValue === 'その他（自由入力）' ? customDialogueTypeInput.value.trim() : dialogueTypeValue;
+            const numSuggestions = numSuggestionsSelect.value;
+
+            const userPrompt = `この画像に合う「${atmosphere}」雰囲気の文字コラ用セリフを${numSuggestions}個、簡潔に提案してください。各セリフは独立したもので、キャラクターの心情や状況をよく表すようにしてください。セリフは「」で囲んでください。`;
+            
+            try {
+                const imagePart = {
+                    inlineData: {
+                        data: imageDataUrl.split(',')[1], 
+                        mimeType: imageDataUrl.match(/^data:(image\/\w+);base64,/)[1]
+                    }
+                };
+
+                const result = await generativeModel.generateContent([userPrompt, imagePart]);
+                const response = result.response;
+                const text = response.text();
+                
+                resultArea.textContent = text;
+                if (text.trim()) {
+                    copyResultButton.style.display = 'inline-block';
+                }
+
+            } catch (error) {
+                console.error("セリフ生成エラー:", error);
+                showError("セリフの生成中にエラーが発生しました: " + error.message);
+                resultArea.textContent = "エラーが発生しました。詳細はコンソールを確認してください。APIキーが正しいか、またはAPIの利用制限に達していないか確認してください。";
+            } finally {
+                loadingMessage.style.display = 'none';
+                if (apiKeyInput.value.trim() && imageDataUrl) { // APIキーと画像があれば再度有効化
+                    generateButton.disabled = false;
+                }
+            }
+        });
+
+        copyResultButton.addEventListener('click', () => {
+            if (resultArea.textContent.trim()) {
+                navigator.clipboard.writeText(resultArea.textContent)
+                    .then(() => {
+                        alert('結果をクリップボードにコピーしました！');
+                    })
+                    .catch(err => {
+                        console.error('コピーに失敗しました: ', err);
+                        alert('コピーに失敗しました。手動でコピーしてください。');
+                    });
+            }
+        });
+
+        function showError(message) {
+            errorMessageElement.textContent = message;
+            errorMessageElement.style.display = message ? 'block' : 'none';
+        }
+
+    </script>
+</body>
+</html>
