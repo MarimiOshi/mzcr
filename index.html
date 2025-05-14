@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <!-- ピンチズーム禁止 -->
-    <title>Gemini 画像ベース セクシャルコンテンツジェネレーター (スマホ対応改善)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gemini 画像ベース セクシャルコンテンツジェネレーター (APIキー修正版)</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -16,7 +16,7 @@
             flex-direction: column;
             align-items: center;
             font-size: 16px; 
-            -webkit-tap-highlight-color: transparent; /* タップ時のハイライト除去 */
+            -webkit-tap-highlight-color: transparent;
         }
         .container {
             background-color: #fff;
@@ -31,7 +31,7 @@
         h1 {
             color: #d9534f;
             margin-bottom: 10px;
-            font-size: 1.6em; /* スマホ向けに少し調整 */
+            font-size: 1.6em;
         }
         .critical-warning-header {
             background-color: #f8d7da;
@@ -39,25 +39,25 @@
             border: 1px solid #f5c6cb;
             padding: 10px;
             border-radius: 4px;
-            margin-bottom: 15px; /* 間隔調整 */
-            font-size: 0.85em; /* 少し小さく */
+            margin-bottom: 15px;
+            font-size: 0.85em;
             text-align: left;
         }
-        .file-input-area { /* ドラッグゾーンとボタンをまとめる */
+        .file-input-area {
             margin-bottom: 15px;
         }
-        .file-input-container { /* ドラッグゾーン */
+        .file-input-container {
             padding: 20px;
             border: 2px dashed #ccc;
             border-radius: 6px;
             cursor: pointer;
             transition: background-color 0.2s;
-            margin-bottom: 10px; /* ボタンとの間隔 */
+            margin-bottom: 10px;
         }
         .file-input-container:hover {
             background-color: #f0f0f0;
         }
-        .file-input-label-button { /* ファイル選択ボタン風ラベル */
+        .file-input-label-button {
             display: block;
             padding: 10px 15px;
             background-color: #5bc0de;
@@ -77,8 +77,8 @@
             margin-top: 10px;
             margin-bottom: 15px;
             min-height: 150px; 
-            width: 100%; /* 幅をコンテナに合わせる */
-            max-width: 400px; /* 最大幅制限 */
+            width: 100%;
+            max-width: 400px;
             margin-left: auto;
             margin-right: auto;
             border: 1px solid #eee;
@@ -87,20 +87,20 @@
             align-items: center;
             background-color: #fafafa;
             position: relative;
-            overflow: hidden; /* スピナーがはみ出ないように */
+            overflow: hidden;
         }
         #image-preview {
             max-width: 100%;
-            max-height: 300px; /* スマホでは高さを少し抑える */
+            max-height: 300px;
             display: none; 
-            object-fit: contain; /* アスペクト比を保ちつつフィット */
+            object-fit: contain;
         }
         #image-loading-spinner {
             display: none; 
             border: 5px solid #f3f3f3;
             border-top: 5px solid #5cb85c;
             border-radius: 50%;
-            width: 30px; /* 少し小さく */
+            width: 30px;
             height: 30px;
             animation: spin 1s linear infinite;
             position: absolute; 
@@ -115,7 +115,7 @@
 
         .options-grid {
             display: grid;
-            grid-template-columns: 1fr; /* スマホでは常に1カラム */
+            grid-template-columns: 1fr;
             gap: 15px;
             margin-bottom: 20px;
             text-align: left;
@@ -138,12 +138,12 @@
             box-sizing: border-box;
             margin-bottom: 5px; 
             font-size: 0.95em;
-            background-color: #fff; /* selectの背景色 */
+            background-color: #fff;
         }
         .options-grid input[type="checkbox"] {
             width: auto; 
             margin-right: 5px;
-            transform: scale(1.2); /* チェックボックスを少し大きく */
+            transform: scale(1.2);
         }
         .checkbox-label { 
             display: flex;
@@ -164,8 +164,8 @@
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s;
-            width: 100%; /* ボタン幅を広げる */
-            box-sizing: border-box; /* パディングを含めた幅計算 */
+            width: 100%;
+            box-sizing: border-box;
         }
         button:hover {
             background-color: #c9302c;
@@ -182,7 +182,7 @@
             background-color: #f9f9f9;
             text-align: left;
             white-space: pre-wrap;
-            min-height: 100px; /* 結果エリアの最小高さ */
+            min-height: 100px;
             font-size: 0.9em;
         }
         .loading-message {
@@ -199,7 +199,7 @@
         }
         .footer-note {
             margin-top: 20px;
-            font-size: 0.75em; /* フッター少し小さく */
+            font-size: 0.75em;
             color: #777;
         }
 
@@ -216,29 +216,25 @@
             .critical-warning-header {
                 font-size: 0.9em;
             }
-            .preset-controls-container {
-                flex-direction: row; 
-                align-items: center;
-            }
-             .preset-controls-container button { /* PC版の保存ボタンは削除したので不要 */
-                /* width: auto; 
-                margin-top: 0; */
+            .preset-controls-container { /* Not used in this version, but kept for structure */
+                /* flex-direction: row; 
+                align-items: center; */
             }
             .file-input-area {
-                display: flex; /* PCではドラッグゾーンとボタンを横並び */
+                display: flex;
                 gap: 10px;
                 align-items: center;
             }
             .file-input-container {
-                flex-grow: 1; /* ドラッグゾーンが幅を取る */
+                flex-grow: 1;
                 margin-bottom: 0;
             }
             .file-input-label-button {
-                width: auto; /* ボタン幅自動 */
-                flex-shrink: 0; /* 縮まないように */
+                width: auto;
+                flex-shrink: 0;
             }
             #image-preview-container {
-                max-width: 500px; /* PCではプレビュー最大幅を少し広げる */
+                max-width: 500px;
             }
             #image-preview {
                 max-height: 350px;
@@ -249,17 +245,17 @@
             .options-grid {
                 grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
             }
-             button { /* Generate/Copyボタン */
-                width: auto; /* PCではボタン幅を自動に */
-                display: inline-block; /* 横並びにするため */
+             button {
+                width: auto;
+                display: inline-block; 
                 margin-left: 5px;
                 margin-right: 5px;
             }
-            button#generate-button { /* PCでは少しマージン */
-                 width: calc(50% - 5px);
+            button#generate-button {
+                 width: calc(50% - 10px); /* marginを考慮 */
             }
             button#copy-result-button {
-                 width: calc(50% - 5px);
+                 width: calc(50% - 10px); /* marginを考慮 */
             }
             textarea#output-prompt {
                 min-height: 150px; 
@@ -382,7 +378,9 @@
     </div>
 
     <script type="module">
+        // Google AI JavaScript SDKのインポート
         import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://cdn.jsdelivr.net/npm/@google/generative-ai/+esm";
+        // APIキーを外部ファイルからインポート
         import { GEMINI_API_KEY } from './api_key.js'; 
 
         const imageFileElement = document.getElementById('image-file');
@@ -422,10 +420,10 @@
                 genAIInstance = new GoogleGenerativeAI(apiKey);
                 generativeModel = genAIInstance.getGenerativeModel({ 
                     model: "gemini-pro-vision",
-                    safetySettings: [ // 【重要】これらの設定は慎重に！
+                    safetySettings: [ 
                         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
                         { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }, // 必要に応じて緩和するがリスクあり
+                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
                         { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
                     ]
                 });
@@ -465,11 +463,9 @@
                 handleFile(files[0]); 
             } 
         });
-        // ファイル選択inputのクリックをdrop-zone全体でトリガー（より広範囲でタップ可能に）
         dropZone.addEventListener('click', () => {
             imageFileElement.click();
         });
-        // file-input-label-button もクリック可能にする
         document.querySelector('.file-input-label-button').addEventListener('click', () => {
             imageFileElement.click();
         });
@@ -484,8 +480,8 @@
             if (file && file.type.startsWith('image/')) {
                 imageLoadingSpinner.style.display = 'block'; 
                 previewPlaceholder.style.display = 'none';
-                imagePreviewElement.style.display = 'none'; // いったん非表示
-                imagePreviewElement.src = '#'; // 古い画像をクリア
+                imagePreviewElement.style.display = 'none'; 
+                imagePreviewElement.src = '#'; 
                 generateButton.disabled = true;
                 showError("");
 
@@ -495,7 +491,7 @@
                     imagePreviewElement.src = imageDataUrl;
                     imagePreviewElement.style.display = 'block';
                     imageLoadingSpinner.style.display = 'none'; 
-                    if (generativeModel) {
+                    if (generativeModel) { // Check if AI is initialized
                          generateButton.disabled = false;
                     }
                 }
@@ -565,8 +561,8 @@
             
             try {
                 const mimeTypeMatch = imageDataUrl.match(/^data:(image\/\w+);base64,/);
-                if (!mimeTypeMatch || !mimeTypeMatch[1]) {
-                    throw new Error("画像のMIMEタイプを特定できませんでした。");
+                if (!mimeTypeMatch || mimeTypeMatch.length < 2 || !mimeTypeMatch[1]) { // より堅牢なチェック
+                    throw new Error("画像のMIMEタイプを特定できませんでした。サポートされていない画像形式の可能性があります。");
                 }
                 const imagePart = {
                     inlineData: { data: imageDataUrl.split(',')[1], mimeType: mimeTypeMatch[1] }
@@ -576,7 +572,7 @@
                 const response = result.response;
                 let text = "";
                 if (response && response.candidates && response.candidates.length > 0 && response.candidates[0].content && response.candidates[0].content.parts && response.candidates[0].content.parts.length > 0) {
-                    text = response.candidates[0].content.parts.map(part => part.text).join("\n"); // 複数パーツの場合も考慮
+                    text = response.candidates[0].content.parts.map(part => part.text).join("\n");
                 } else if (response && response.promptFeedback && response.promptFeedback.blockReason) {
                     text = `コンテンツ生成がブロックされました。理由: ${response.promptFeedback.blockReason}`;
                     if(response.promptFeedback.safetyRatings && response.promptFeedback.safetyRatings.length > 0){
@@ -598,7 +594,6 @@
                 if (error.message) {
                     errorMessage += `\n詳細: ${error.message}`;
                 }
-                // (APIからのフィードバック表示は省略。上記で対応済み)
                 showError(errorMessage);
                 resultArea.textContent = "エラーが発生しました。詳細はコンソールを確認し、APIキーやセーフティ設定、プロンプト内容を見直してください。";
             } finally {
