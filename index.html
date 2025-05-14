@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini 文字コラセリフジェネレーター</title>
+    <title>Gemini 文字コラセリフジェネレーター (APIキー分離版)</title>
     <style>
+        /* CSSは前回と同様なので省略 */
         body {
             font-family: sans-serif;
             line-height: 1.6;
@@ -28,23 +29,7 @@
         h1 {
             color: #333;
         }
-        .api-key-input-container {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        .api-key-input-container label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .api-key-input-container input[type="password"],
-        .api-key-input-container input[type="text"] { /* For better UX, allow text for easier copy-paste */
-            width: calc(100% - 22px);
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
+        /* APIキー入力欄関連のCSSは不要になったので削除しても良い */
         .file-input-container {
             margin-bottom: 20px;
             padding: 15px;
@@ -57,12 +42,12 @@
             background-color: #f0f0f0;
         }
         input[type="file"] {
-            display: none; /* Hide default file input */
+            display: none; 
         }
         #image-preview-container {
             margin-top: 15px;
             margin-bottom: 20px;
-            min-height: 100px; /* プレビューエリアの最小高さ */
+            min-height: 100px;
             border: 1px solid #eee;
             display: flex;
             justify-content: center;
@@ -72,7 +57,7 @@
         #image-preview {
             max-width: 100%;
             max-height: 300px;
-            display: none; /* Initially hidden */
+            display: none; 
         }
         .prompt-options {
             margin-bottom: 20px;
@@ -118,11 +103,11 @@
             border-radius: 6px;
             background-color: #f9f9f9;
             text-align: left;
-            white-space: pre-wrap; /* 改行を保持 */
+            white-space: pre-wrap;
             min-height: 100px;
         }
         .loading-message {
-            display: none; /* Initially hidden */
+            display: none;
             margin-top: 10px;
             color: #555;
         }
@@ -141,15 +126,9 @@
 <body>
     <div class="container">
         <h1>Gemini 文字コラセリフジェネレーター</h1>
-
-        <div class="api-key-input-container">
-            <label for="api-key">Gemini APIキー:</label>
-            <input type="password" id="api-key" placeholder="ここにAPIキーを入力 (セキュリティのため非表示)">
-            <p style="font-size:0.8em; color: #555;">
-                APIキーはブラウザに保存されず、このページを開いている間のみ使用されます。
-                <strong>この方法は安全ではありません。個人利用に限定してください。</strong>
-            </p>
-        </div>
+        <p style="font-size:0.9em; color: #d9534f; background-color: #f2dede; border: 1px solid #ebccd1; padding: 10px; border-radius: 4px;">
+            <strong>セキュリティ警告:</strong> APIキーは外部ファイルに記述されていますが、ブラウザからアクセス可能です。この方法は安全ではありません。個人利用かつローカル環境での利用に限定してください。
+        </p>
 
         <div class="file-input-container" id="drop-zone">
             <label for="image-file">画像ファイルを選択するか、ここにドラッグ＆ドロップしてください</label>
@@ -191,7 +170,6 @@
         <div id="result-area">ここにセリフが表示されます。</div>
         <button id="copy-result-button" style="margin-top:10px; background-color: #5cb85c; display:none;">結果をコピー</button>
 
-
         <p class="footer-note">
             このツールはGoogleのGemini APIを利用しています。<br>
             APIキーの取り扱いには十分注意し、個人利用の範囲でご利用ください。<br>
@@ -201,10 +179,11 @@
 
     <script type="module">
         // Google AI JavaScript SDKのインポート
-        // SDKのバージョンは適宜最新のものに更新してください
         import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://cdn.jsdelivr.net/npm/@google/generative-ai/+esm";
+        // APIキーを外部ファイルからインポート
+        import { GEMINI_API_KEY } from './api_key.js'; // './' は同じディレクトリにある場合
 
-        const apiKeyInput = document.getElementById('api-key');
+        // const apiKeyInput = document.getElementById('api-key'); // 削除
         const imageFileElement = document.getElementById('image-file');
         const imagePreviewElement = document.getElementById('image-preview');
         const previewPlaceholder = document.getElementById('preview-placeholder');
@@ -218,29 +197,21 @@
         const dropZone = document.getElementById('drop-zone');
         const copyResultButton = document.getElementById('copy-result-button');
 
-        // セキュリティのため、ページを離れる際にAPIキーをクリアする（より安全なのは入力させないこと）
-        // window.addEventListener('beforeunload', () => {
-        //     apiKeyInput.value = ''; 
-        // });
-        // APIキーの初期値 (これはダミーです。実際のキーに置き換えてください)
-        // apiKeyInput.value = "YOUR_GEMINI_API_KEY"; // ★★★ここにAPIキーを直書き★★★
-
         let imageDataUrl = null;
         let genAIInstance = null;
         let generativeModel = null;
 
         function initializeGenerativeAI() {
-            const apiKey = apiKeyInput.value.trim();
-            if (!apiKey) {
-                showError("APIキーが入力されていません。");
+            const apiKey = GEMINI_API_KEY; // インポートした定数を使用
+            if (!apiKey || apiKey === "YOUR_GEMINI_API_KEY") { // 未設定または初期値のままの場合
+                showError("APIキーが設定されていません。api_key.js を確認してください。");
+                generateButton.disabled = true; // APIキーがない場合は生成ボタンを無効化
                 return false;
             }
             try {
                 genAIInstance = new GoogleGenerativeAI(apiKey);
                 generativeModel = genAIInstance.getGenerativeModel({ 
-                    model: "gemini-pro-vision", // 画像処理が可能なモデル
-                    // セーフティセッティング (必要に応じて調整)
-                    // 注意: これを緩和しすぎるとAPIエラーや予期せぬ結果の原因になることがあります
+                    model: "gemini-pro-vision",
                     safetySettings: [
                         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
                         { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
@@ -248,22 +219,22 @@
                         { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
                     ]
                 });
-                showError(""); // エラーメッセージをクリア
+                showError(""); 
+                // APIキーが正しく読み込めたら、画像が選択されていれば生成ボタンを有効化
+                if (imageDataUrl) {
+                    generateButton.disabled = false;
+                }
                 return true;
             } catch (error) {
                 console.error("Gemini AIの初期化に失敗:", error);
                 showError("Gemini AIの初期化に失敗しました: " + error.message);
+                generateButton.disabled = true;
                 return false;
             }
         }
         
-        apiKeyInput.addEventListener('input', () => {
-            if (imageDataUrl && apiKeyInput.value.trim()) {
-                generateButton.disabled = false;
-            } else {
-                generateButton.disabled = true;
-            }
-        });
+        // 初期化を試みる（ページロード時）
+        initializeGenerativeAI();
 
 
         dialogueTypeSelect.addEventListener('change', function() {
@@ -275,18 +246,17 @@
             }
         });
         
-        // --- ドラッグ＆ドロップ処理 ---
         dropZone.addEventListener('dragover', (event) => {
             event.stopPropagation();
             event.preventDefault();
-            event.dataTransfer.dropEffect = 'copy'; // カーソルをコピーアイコンに
+            event.dataTransfer.dropEffect = 'copy'; 
             dropZone.style.backgroundColor = '#e0e0e0';
         });
 
         dropZone.addEventListener('dragleave', (event) => {
             event.stopPropagation();
             event.preventDefault();
-            dropZone.style.backgroundColor = ''; // 元の背景色に
+            dropZone.style.backgroundColor = ''; 
         });
 
         dropZone.addEventListener('drop', (event) => {
@@ -298,13 +268,11 @@
                 handleFile(files[0]);
             }
         });
-        // ファイル選択inputにもイベントリスナーを追加
         imageFileElement.addEventListener('change', (event) => {
             if (event.target.files && event.target.files[0]) {
                 handleFile(event.target.files[0]);
             }
         });
-        // --- ドラッグ＆ドロップ処理ここまで ---
 
         function handleFile(file) {
             if (file && file.type.startsWith('image/')) {
@@ -314,10 +282,11 @@
                     imagePreviewElement.src = imageDataUrl;
                     imagePreviewElement.style.display = 'block';
                     previewPlaceholder.style.display = 'none';
-                    if (apiKeyInput.value.trim()) {
-                        generateButton.disabled = false;
+                    // APIキーが既に設定されていれば（initializeGenerativeAIが成功していれば）ボタン有効化
+                    if (generativeModel) { // generativeModelが初期化されていればAPIキーはOK
+                         generateButton.disabled = false;
                     }
-                    showError(""); // ファイル選択成功でエラーをクリア
+                    showError(""); 
                 }
                 reader.readAsDataURL(file);
             } else {
@@ -334,7 +303,11 @@
                 showError("まず画像を選択してください。");
                 return;
             }
-            if (!initializeGenerativeAI()) return; // APIキーで初期化試行
+            // APIキーの再チェックはinitializeGenerativeAI内で行われるが、
+            // generativeModelが初期化済みかでも判断できる
+            if (!generativeModel) {
+                if (!initializeGenerativeAI()) return; // ダメならここで終了
+            }
 
             loadingMessage.style.display = 'block';
             generateButton.disabled = true;
@@ -371,7 +344,7 @@
                 resultArea.textContent = "エラーが発生しました。詳細はコンソールを確認してください。APIキーが正しいか、またはAPIの利用制限に達していないか確認してください。";
             } finally {
                 loadingMessage.style.display = 'none';
-                if (apiKeyInput.value.trim() && imageDataUrl) { // APIキーと画像があれば再度有効化
+                if (generativeModel && imageDataUrl) { 
                     generateButton.disabled = false;
                 }
             }
