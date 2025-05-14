@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Gemini 画像ベース セクシャルコンテンツジェネレーター (APIキー修正版)</title>
+    <title>Gemini 画像ベース セクシャルコンテンツジェネレーター (モデル更新版)</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -216,10 +216,6 @@
             .critical-warning-header {
                 font-size: 0.9em;
             }
-            .preset-controls-container { /* Not used in this version, but kept for structure */
-                /* flex-direction: row; 
-                align-items: center; */
-            }
             .file-input-area {
                 display: flex;
                 gap: 10px;
@@ -252,10 +248,10 @@
                 margin-right: 5px;
             }
             button#generate-button {
-                 width: calc(50% - 10px); /* marginを考慮 */
+                 width: calc(50% - 10px); 
             }
             button#copy-result-button {
-                 width: calc(50% - 10px); /* marginを考慮 */
+                 width: calc(50% - 10px); 
             }
             textarea#output-prompt {
                 min-height: 150px; 
@@ -411,7 +407,7 @@
 
         function initializeGenerativeAI() {
             const apiKey = GEMINI_API_KEY;
-            if (!apiKey || apiKey === "YOUR_GEMINI_API_KEY") {
+            if (!apiKey || apiKey === "YOUR_GEMINI_API_KEY") { // 未設定または初期値のままの場合
                 showError("APIキーが設定されていません。api_key.js を確認してください。");
                 generateButton.disabled = true;
                 return false;
@@ -419,7 +415,7 @@
             try {
                 genAIInstance = new GoogleGenerativeAI(apiKey);
                 generativeModel = genAIInstance.getGenerativeModel({ 
-                    model: "gemini-pro-vision",
+                    model: "gemini-1.5-flash-latest", // ★★★ モデル名を更新 ★★★
                     safetySettings: [ 
                         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
                         { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
@@ -491,7 +487,7 @@
                     imagePreviewElement.src = imageDataUrl;
                     imagePreviewElement.style.display = 'block';
                     imageLoadingSpinner.style.display = 'none'; 
-                    if (generativeModel) { // Check if AI is initialized
+                    if (generativeModel) {
                          generateButton.disabled = false;
                     }
                 }
@@ -561,7 +557,7 @@
             
             try {
                 const mimeTypeMatch = imageDataUrl.match(/^data:(image\/\w+);base64,/);
-                if (!mimeTypeMatch || mimeTypeMatch.length < 2 || !mimeTypeMatch[1]) { // より堅牢なチェック
+                if (!mimeTypeMatch || mimeTypeMatch.length < 2 || !mimeTypeMatch[1]) { 
                     throw new Error("画像のMIMEタイプを特定できませんでした。サポートされていない画像形式の可能性があります。");
                 }
                 const imagePart = {
